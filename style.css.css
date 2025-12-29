@@ -1,0 +1,144 @@
+
+:root {
+  --bg-deep: #050b1a;
+  --bg-sidebar: #020617;
+  --accent-primary: #dc2626; /* Vermelho 600 */
+  --accent-white: #ffffff;
+  --text-main: #ffffff;
+  --text-muted: #ffffff;
+  --glass: rgba(15, 23, 42, 0.7);
+  --border-light: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+/* REGRA DE OURO: TEXTO BRANCO EM TODA A PLATAFORMA */
+html, body, #root, 
+h1, h2, h3, h4, h5, h6, 
+p, span, div, label, a, 
+li, b, strong, i, em,
+small, section, article, aside, main, nav, input, textarea, select {
+  color: #ffffff !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--bg-deep) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  background: radial-gradient(circle at 50% -20%, #1e40af 0%, #050b1a 80%) !important;
+}
+
+/* BOTÕES CINEMATOGRÁFICOS VERMELHOS */
+button, 
+.btn-command {
+  background-color: var(--accent-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  border-radius: 12px;
+}
+
+button:hover, 
+.btn-command:hover {
+  filter: brightness(1.2) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4) !important;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  background-color: #334155 !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ÍCONES SEMPRE BRANCOS */
+svg {
+  color: inherit;
+}
+
+/* CAMPOS DE INPUT CINEMATOGRÁFICOS */
+input, 
+textarea, 
+select {
+  background: rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 14px !important;
+  padding: 14px !important;
+  outline: none !important;
+  transition: all 0.3s ease;
+}
+
+input:focus, 
+textarea:focus, 
+select:focus {
+  border-color: var(--accent-primary) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1) !important;
+}
+
+::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* CARDS COM EFEITO VIDRO */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(25px);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* SCROLLBAR PERSONALIZADA */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(220, 38, 38, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* ANIMAÇÕES */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) transparent;
+}
