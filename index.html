@@ -1,16 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Projeto Inicial</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Traffic Creator Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Projeto Base</h1>
-    <p>Estrutura inicial para versionamento no GitHub.</p>
+<div class="app">
 
-    <script src="main.js"></script>
+  <!-- MENU LATERAL -->
+  <aside class="sidebar">
+    <h1>Traffic Creator</h1>
+
+    <label>API Gemini</label>
+    <input id="apiKey" type="password" placeholder="Cole sua API Key">
+
+    <div class="api-row">
+      <button onclick="ativarApi()">Ativar</button>
+      <button onclick="limparApi()">Limpar</button>
+      <span id="apiStatus" class="status red"></span>
+    </div>
+
+    <button onclick="salvarProjeto()">Salvar Projeto</button>
+    <button onclick="reabrirProjeto()">Reabrir Projeto</button>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main">
+
+    <header>
+      <h2>Produção de Criativos para Tráfego Pago</h2>
+    </header>
+
+    <section class="controls">
+
+      <textarea id="textoCena" placeholder="Texto / legenda / roteiro da cena"></textarea>
+
+      <div class="uploads">
+        <label class="upload">
+          Upload Imagem
+          <input type="file" accept="image/*" onchange="uploadMidia(event,'imagem')">
+        </label>
+
+        <label class="upload">
+          Upload Vídeo
+          <input type="file" accept="video/*" onchange="uploadMidia(event,'video')">
+        </label>
+
+        <label class="upload">
+          Upload Áudio
+          <input type="file" accept="audio/*" onchange="uploadMidia(event,'audio')">
+        </label>
+      </div>
+
+      <div class="actions">
+        <button onclick="adicionarCena()">Adicionar Cena</button>
+        <button onclick="gerarVideo()">Gerar Vídeo Final</button>
+      </div>
+
+    </section>
+
+    <section class="preview-area">
+      <canvas id="canvas" width="720" height="1280"></canvas>
+    </section>
+
+    <section id="storyboard" class="storyboard"></section>
+
+  </main>
+</div>
+
+<script src="main.js"></script>
 </body>
 </html>
