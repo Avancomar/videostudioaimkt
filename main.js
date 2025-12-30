@@ -1,14 +1,24 @@
+// Inicializa referências do DOM
+const apiKey = document.getElementById("apiKey");
+const apiStatus = document.getElementById("apiStatus");
+const textoCena = document.getElementById("textoCena");
+const storyboard = document.getElementById("storyboard");
+const canvas = document.getElementById("canvas");
+
+if (!canvas) {
+  console.error("Canvas não encontrado. Verifique se o id 'canvas' existe no HTML.");
+}
+const ctx = canvas ? canvas.getContext("2d") : null;
+
 let cenas = JSON.parse(localStorage.getItem("cenas") || "[]");
 let midiaAtual = null;
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
 function ativarApi() {
+  if (!apiKey) return alert("Campo API Key não encontrado.");
   const key = apiKey.value;
   if (key && key.length > 10) {
     localStorage.setItem("apiKey", key);
-    apiStatus.className = "status green";
+    if (apiStatus) apiStatus.className = "status green";
   } else {
     alert("API Key inválida");
   }
@@ -16,8 +26,8 @@ function ativarApi() {
 
 function limparApi() {
   localStorage.removeItem("apiKey");
-  apiKey.value = "";
-  apiStatus.className = "status red";
+  if (apiKey) apiKey.value = "";
+  if (apiStatus) apiStatus.className = "status red";
 }
 
 function uploadMidia(event, tipo) {
@@ -33,7 +43,7 @@ function uploadMidia(event, tipo) {
 }
 
 function previewMidia() {
-  if (!midiaAtual) return;
+  if (!midiaAtual || !ctx) return;
 
   if (midiaAtual.tipo === "imagem") {
     const img = new Image();
@@ -53,15 +63,16 @@ function adicionarCena() {
 
   cenas.push({
     midia: midiaAtual,
-    texto: textoCena.value
+    texto: textoCena ? textoCena.value : ""
   });
 
   localStorage.setItem("cenas", JSON.stringify(cenas));
-  textoCena.value = "";
+  if (textoCena) textoCena.value = "";
   renderStoryboard();
 }
 
 function renderStoryboard() {
+  if (!storyboard) return;
   storyboard.innerHTML = "";
   cenas.forEach((cena, index) => {
     const div = document.createElement("div");
@@ -77,8 +88,21 @@ function gerarVideo() {
     return;
   }
 
+  if (!canvas || !window.MediaRecorder) {
+    alert("Impossível gerar vídeo: canvas ou MediaRecorder não disponível no seu navegador.");
+    return;
+  }
+
   const stream = canvas.captureStream(30);
-  const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+  let recorder;
+  try {
+    recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+  } catch (err) {
+    console.error("MediaRecorder error:", err);
+    alert("Não foi possível iniciar o gravador. Verifique suporte a MediaRecorder ou o mimeType.");
+    return;
+  }
+
   const chunks = [];
 
   recorder.ondataavailable = e => chunks.push(e.data);
@@ -96,6 +120,11 @@ function gerarVideo() {
 
 function reproduzirCena(index, recorder) {
   if (index >= cenas.length) {
+    recorder.stop();
+    return;
+  }
+
+  if (!ctx) {
     recorder.stop();
     return;
   }
