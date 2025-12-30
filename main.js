@@ -1,26 +1,31 @@
-// Inicializa referências do DOM após o carregamento
+// Robustified main.js — inicializa após DOMContentLoaded e expõe funções globalmente
 document.addEventListener('DOMContentLoaded', () => {
-  const apiKey = document.getElementById('apiKey');
-  const apiStatus = document.getElementById('apiStatus');
-  const textoCena = document.getElementById('textoCena');
-  const storyboard = document.getElementById('storyboard');
-  const canvas = document.getElementById('canvas');
+  // Exponha referências ao DOM no objeto global para compatibilidade com atributos onclick inline
+  window.apiKey = document.getElementById('apiKey');
+  window.apiStatus = document.getElementById('apiStatus');
+  window.textoCena = document.getElementById('textoCena');
+  window.storyboard = document.getElementById('storyboard');
+  window.canvas = document.getElementById('canvas');
 
-  if (!canvas) {
+  if (!window.canvas) {
     console.error("Canvas não encontrado. Verifique se o id 'canvas' existe no HTML.");
-    return;
+    // Ainda expomos funções, mas sem canvas muitas funcionalidades ficam indisponíveis
+  } else {
+    window.ctx = window.canvas.getContext('2d');
   }
-  const ctx = canvas.getContext('2d');
 
-  let cenas = JSON.parse(localStorage.getItem('cenas') || '[]');
-  let midiaAtual = null;
+  // Estado da aplicação
+  window.cenas = JSON.parse(localStorage.getItem('cenas') || '[]');
+  window.midiaAtual = null;
 
+  // Funções de API key
   function ativarApi() {
-    if (!apiKey) return alert('Campo API Key não encontrado.');
-    const key = apiKey.value;
+    if (!window.apiKey) return alert('Campo API Key não encontrado.');
+    const key = window.apiKey.value;
     if (key && key.length > 10) {
       localStorage.setItem('apiKey', key);
-      if (apiStatus) apiStatus.className = 'status green';
+      if (window.apiStatus) window.apiStatus.className = 'status green';
+      alert('API ativada');
     } else {
       alert('API Key inválida');
     }
@@ -28,74 +33,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function limparApi() {
     localStorage.removeItem('apiKey');
-    if (apiKey) apiKey.value = '';
-    if (apiStatus) apiStatus.className = 'status red';
+    if (window.apiKey) window.apiKey.value = '';
+    if (window.apiStatus) window.apiStatus.className = 'status red';
   }
 
-  window.uploadMidia = function(event, tipo) {
-    const file = event.target.files[0];
+  // Upload de mídia (imagem, vídeo, áudio)
+  window.uploadMidia = function (event, tipo) {
+    const file = event.target.files && event.target.files[0];
     if (!file) return;
 
-    midiaAtual = {
+    window.midiaAtual = {
       tipo,
-      url: URL.createObjectURL(file)
+      url: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      type: file.type
     };
 
     previewMidia();
   };
 
   function previewMidia() {
-    if (!midiaAtual || !ctx) return;
+    if (!window.midiaAtual || !window.ctx || !window.canvas) return;
 
-    if (midiaAtual.tipo === 'imagem') {
+    if (window.midiaAtual.tipo === 'imagem') {
       const img = new Image();
-      img.src = midiaAtual.url;
+      img.src = window.midiaAtual.url;
       img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Limpa e desenha mantendo proporção centralizada (cobre o canvas)
+        const cw = window.canvas.width;
+        const ch = window.canvas.height;
+        const iw = img.width;
+        const ih = img.height;
+        const scale = Math.max(cw / iw, ch / ih);
+        const nw = iw * scale;
+        const nh = ih * scale;
+        const dx = (cw - nw) / 2;
+        const dy = (ch - nh) / 2;
+
+        window.ctx.clearRect(0, 0, cw, ch);
+        window.ctx.drawImage(img, dx, dy, nw, nh);
       };
+      img.onerror = (e) => {
+        console.error('Erro ao carregar imagem de preview', e);
+        alert('Não foi possível exibir a imagem de preview.');
+      };
+    } else {
+      // Para vídeo/áudio podemos desenhar um placeholder ou simplesmente limpar o canvas
+      if (window.ctx && window.canvas) {
+        window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
+        // opcional: desenhar texto informando tipo de mídia
+        window.ctx.fillStyle = '#222';
+        window.ctx.fillRect(0, 0, window.canvas.width, window.canvas.height);
+        window.ctx.fillStyle = '#fff';
+        window.ctx.font = '24px Arial';
+        window.ctx.fillText(window.midiaAtual.tipo.toUpperCase(), 20, 40);
+      }
     }
   }
 
-  window.adicionarCena = function() {
-    if (!midiaAtual) {
+  // Adicionar cena ao storyboard
+  window.adicionarCena = function () {
+    if (!window.midiaAtual) {
       alert('Envie uma mídia antes');
       return;
     }
 
-    cenas.push({
-      midia: midiaAtual,
-      texto: textoCena ? textoCena.value : ''
+    const texto = window.textoCena ? window.textoCena.value : '';
+    window.cenas.push({
+      midia: window.midiaAtual,
+      texto: texto
     });
 
-    localStorage.setItem('cenas', JSON.stringify(cenas));
-    if (textoCena) textoCena.value = '';
+    localStorage.setItem('cenas', JSON.stringify(window.cenas));
+    if (window.textoCena) window.textoCena.value = '';
     renderStoryboard();
   };
 
   function renderStoryboard() {
-    if (!storyboard) return;
-    storyboard.innerHTML = '';
-    cenas.forEach((cena, index) => {
+    if (!window.storyboard) return;
+    window.storyboard.innerHTML = '';
+    window.cenas.forEach((cena, index) => {
       const div = document.createElement('div');
       div.className = 'scene';
       div.textContent = 'Cena ' + (index + 1);
-      storyboard.appendChild(div);
+      // opcional: thumbnail clicável para visualizar
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => {
+        if (cena.midia && cena.midia.url && window.ctx && window.canvas) {
+          const img = new Image();
+          img.src = cena.midia.url;
+          img.onload = () => {
+            window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
+            window.ctx.drawImage(img, 0, 0, window.canvas.width, window.canvas.height);
+          };
+        }
+      });
+      window.storyboard.appendChild(div);
     });
   }
 
-  window.gerarVideo = function() {
-    if (!cenas.length) {
+  // Gerar vídeo a partir das cenas desenhadas no canvas
+  window.gerarVideo = function () {
+    if (!window.cenas || !window.cenas.length) {
       alert('Nenhuma cena criada');
       return;
     }
 
-    if (!canvas || !window.MediaRecorder) {
+    if (!window.canvas || !('MediaRecorder' in window)) {
       alert('Impossível gerar vídeo: canvas ou MediaRecorder não disponível no seu navegador.');
       return;
     }
 
-    const stream = canvas.captureStream(30);
+    const stream = window.canvas.captureStream(30);
     let recorder;
     try {
       recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
@@ -106,8 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const chunks = [];
-
-    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     recorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const link = document.createElement('a');
@@ -121,37 +170,50 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function reproduzirCena(index, recorder) {
-    if (index >= cenas.length) {
+    if (index >= window.cenas.length) {
       recorder.stop();
       return;
     }
 
-    if (!ctx) {
+    if (!window.ctx || !window.canvas) {
       recorder.stop();
+      return;
+    }
+
+    const cena = window.cenas[index];
+    if (!cena || !cena.midia || !cena.midia.url) {
+      // pula cena inválida
+      setTimeout(() => reproduzirCena(index + 1, recorder), 1000);
       return;
     }
 
     const img = new Image();
-    img.src = cenas[index].midia.url;
+    img.src = cena.midia.url;
     img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
+      window.ctx.drawImage(img, 0, 0, window.canvas.width, window.canvas.height);
+      // espera 2s (2000 ms) e vai para próxima cena
       setTimeout(() => reproduzirCena(index + 1, recorder), 2000);
+    };
+    img.onerror = (e) => {
+      console.error('Erro ao carregar cena', e);
+      setTimeout(() => reproduzirCena(index + 1, recorder), 500);
     };
   }
 
-  window.salvarProjeto = function() {
-    localStorage.setItem('cenas', JSON.stringify(cenas));
+  window.salvarProjeto = function () {
+    localStorage.setItem('cenas', JSON.stringify(window.cenas));
     alert('Projeto salvo');
   };
 
-  window.reabrirProjeto = function() {
+  window.reabrirProjeto = function () {
     location.reload();
   };
 
-  renderStoryboard();
-
-  // Exponha funções de ativar/limpar API para os botões
+  // Expor ativar/limpar API globalmente (para botões inline)
   window.ativarApi = ativarApi;
   window.limparApi = limparApi;
+
+  // Renderiza o storyboard na inicialização
+  renderStoryboard();
 });
